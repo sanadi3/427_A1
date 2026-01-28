@@ -61,6 +61,7 @@ int parseInput(char inp[]) {
     while (line != NULL) {
         // reset w for each line
         w = 0;
+        // STARTER CODE
         for (ix = 0; line[ix] == ' ' && ix < 1000; ix++); // skip white spaces
         while (line[ix] != '\n' && line[ix] != '\0' && ix < 1000) {
             // extract a word
@@ -74,6 +75,7 @@ int parseInput(char inp[]) {
             ix++; 
         }
         errorCode = interpreter(words, w);
+        // STARTER CODE
         if (errorCode == -1) return errorCode; // exit on error
         line = strtok(NULL, ";"); // next line
     }
