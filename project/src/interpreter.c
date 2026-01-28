@@ -153,3 +153,106 @@ int echo(char *text) {
     printf("%s\n", text);
     return 0;
 }
+
+int compare(const void *a, const void *b) {
+    return strcmp(*(char **)a, *(char **)b);
+}
+
+int my_ls() {
+    struct dirent *entry;
+    DIR *dir = opendir(".");
+
+    if (dir == NULL) {
+        return badcommand();
+    }
+
+    char* buffer[100];
+    int count = 0;
+    while ((entry = readdir(dir)) != NULL) {
+        buffer[count] = strdup(entry->d_name);
+        count++;
+    }
+
+    closedir(dir);
+    qsort(buffer, count, sizeof(char *), compare);
+    for (int i = 0; i < count; i++) {
+        printf("%s\n", buffer[i]);
+    }
+
+    return 0;
+}
+
+int is_alphanumeric(char* str) {
+    if (str == NULL || strlen(str) == 0) {
+        return 0; 
+    }
+
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (!isalnum(str[i])) {
+            return 0; 
+        }
+    }
+    return 1;
+}   
+
+int my_mkdir(char *dir) {
+    char *newdir = NULL;
+
+    // case variable reference
+    if (dir[0] == '$') {
+        char* var_name = dir + 1;
+        char* value = mem_get_value(var_name);
+        // if variable doesnt exist
+        if (strcmp(value, "Variable does not exist") == 0) {
+            printf("Bad command: my_mkdir\n");
+            return 1;
+        }
+
+        if (!is_alphanumeric(value)) {
+            printf("Bad command: my_mkdir\n");
+            return 1;
+        }
+        newdir = value;
+
+    } else { 
+        // case direct input
+        if (!is_alphanumeric(dir)) {
+            printf("Bad command: my_mkdir\n");
+            return 1;
+        }
+        newdir = dir;
+    }
+
+    // create dir
+    if (mkdir(newdir, 0755) == -1) {
+        printf("Bad command: my_mkdir\n");
+        return 1;
+    }
+
+    return 0;
+}
+
+int my_touch(char *file) {
+    FILE *fp = fopen(file, "a");
+    if (fp == NULL) {
+        printf("Bad command: my_touch\n"); // need ????? (dont see it in test case)
+        return badcommand();
+    }
+    fclose(fp);
+    return 0;
+}
+
+int my_cd(char *dir) {
+    struct stat sb;
+    // check if dir exists
+    if (stat(dir, &sb) != 0 || !S_ISDIR(sb.st_mode)) {
+        printf("Bad command: my_cd\n");
+        return 1;
+    }
+    // change dir
+    if (chdir(dir) == -1) {
+        printf("Bad command: my_cd\n");
+        return 1;
+    }
+    return 0;
+}
