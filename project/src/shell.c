@@ -54,18 +54,28 @@ int parseInput(char inp[]) {
     int ix = 0, w = 0;
     int wordlen;
     int errorCode;
-    for (ix = 0; inp[ix] == ' ' && ix < 1000; ix++); // skip white spaces
-    while (inp[ix] != '\n' && inp[ix] != '\0' && ix < 1000) {
-        // extract a word
-        for (wordlen = 0; !wordEnding(inp[ix]) && ix < 1000; ix++, wordlen++) {
-            tmp[wordlen] = inp[ix];                        
+    char *line;
+    
+    // split input by ';'
+    line = strtok(inp, ";");
+    while (line != NULL) {
+        // reset w for each line
+        w = 0;
+        for (ix = 0; line[ix] == ' ' && ix < 1000; ix++); // skip white spaces
+        while (line[ix] != '\n' && line[ix] != '\0' && ix < 1000) {
+            // extract a word
+            for (wordlen = 0; !wordEnding(line[ix]) && ix < 1000; ix++, wordlen++) {
+                tmp[wordlen] = line[ix];                        
+            }
+            tmp[wordlen] = '\0';
+            words[w] = strdup(tmp);
+            w++;
+            if (line[ix] == '\0') break;
+            ix++; 
         }
-        tmp[wordlen] = '\0';
-        words[w] = strdup(tmp);
-        w++;
-        if (inp[ix] == '\0') break;
-        ix++; 
+        errorCode = interpreter(words, w);
+        if (errorCode == -1) return errorCode; // exit on error
+        line = strtok(NULL, ";"); // next line
     }
-    errorCode = interpreter(words, w);
-    return errorCode;
+    return 0;
 }
