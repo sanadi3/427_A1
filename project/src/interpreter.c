@@ -25,6 +25,11 @@ int source(char *script);
 int badcommandFileDoesNotExist();
 //echo function
 int echo(char *text);
+int my_ls();
+int my_mkdir(char *dir);
+int my_touch(char *file);
+int my_cd(char *dir);
+int run(char *args[], int args_size);
 
 // Interpret commands and their arguments
 int interpreter(char *command_args[], int args_size) {
@@ -71,7 +76,33 @@ int interpreter(char *command_args[], int args_size) {
             return badcommand();
         }
         return echo(command_args[1]);
-    } else
+    } else if (strcmp(command_args[0], "my_ls") == 0) {
+        if (args_size != 1)
+            return badcommand();
+        return my_ls();
+
+    } else if (strcmp(command_args[0], "my_mkdir") == 0) {
+        if (args_size != 2)
+            return badcommand();
+        return my_mkdir(command_args[1]);
+
+    } else if (strcmp(command_args[0], "my_touch") == 0) {
+        if (args_size != 2)
+            return badcommand();
+        return my_touch(command_args[1]);
+
+    } else if (strcmp(command_args[0], "my_cd") == 0) {
+        if (args_size != 2)
+            return badcommand();
+        return my_cd(command_args[1]);
+
+    } else if (strcmp(command_args[0], "run") == 0) {
+        if (args_size < 2)
+            return badcommand();
+        return run(command_args, args_size);
+
+    }
+    else
         return badcommand();
 }
 
@@ -255,4 +286,34 @@ int my_cd(char *dir) {
         return 1;
     }
     return 0;
+}
+
+int run(char *args[], int args_size) {
+    pid_t pid = fork();
+    if (pid < 0) {
+        // fork failed
+        return badcommand();
+    }
+
+    if (pid == 0) {
+        // child: build argv for execvp from args[1..]
+        int exec_argc = args_size - 1;
+        char **exec_args = malloc((exec_argc + 1) * sizeof(char *));
+        if (exec_args == NULL) {
+            return badcommand();
+        }
+        for (int i = 0; i < exec_argc; i++) {
+            exec_args[i] = args[i + 1];
+        }
+        exec_args[exec_argc] = NULL;
+
+        execvp(exec_args[0], exec_args);
+        // if execvp returns, error
+        return badcommand();   
+    } else {
+        // parent wait for child 
+        int status = 0;
+        waitpid(pid, &status, 0);
+        return 0;
+    }
 }
