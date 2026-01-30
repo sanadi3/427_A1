@@ -296,6 +296,7 @@ int my_cd(char *dir) {
 }
 
 int run(char *args[], int args_size) {
+    fflush(stdout);
     pid_t pid = fork();
     if (pid < 0) {
         // fork failed
