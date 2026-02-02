@@ -9,4 +9,4 @@ To run a test, navigate to 427_A1/test-cases and run:
 
 Team:
 - Team Member 1: Sanad Abu Baker, 261143797
-- Team Member 2: [Name]
+- Team Member 2: Nigel Yip, 261308092
