@@ -12,13 +12,12 @@ cleanup
 for test in echo ls mkdir oneline oneline2 prompt run badcommand set source; do
     echo "Testing $test..."
     cleanup
-    ../project/src/mysh < ${test}.txt > ${test}_my_output.txt
-    if diff -q ${test}_my_output.txt ${test}_result.txt > /dev/null; then
+    if ../project/src/mysh < ${test}.txt | diff -q - ${test}_result.txt > /dev/null; then
         echo "✓ $test PASSED"
     else
         echo "✗ $test FAILED"
         echo "Differences:"
-        diff ${test}_my_output.txt ${test}_result.txt
+        ../project/src/mysh < ${test}.txt | diff - ${test}_result.txt
     fi
     cleanup
     echo ""
