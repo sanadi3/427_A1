@@ -159,7 +159,12 @@ int source(char *script) {
         return badcommandFileDoesNotExist();
     }
 
-    fgets(line, MAX_USER_INPUT - 1, p);
+    // Read first line and check if file is empty
+    if (fgets(line, MAX_USER_INPUT - 1, p) == NULL) {
+        fclose(p);
+        return 0;  // Empty file, no error
+    }
+    
     while (1) {
         errCode = parseInput(line);     // which calls interpreter()
         memset(line, 0, sizeof(line));
@@ -167,7 +172,9 @@ int source(char *script) {
         if (feof(p)) {
             break;
         }
-        fgets(line, MAX_USER_INPUT - 1, p);
+        if (fgets(line, MAX_USER_INPUT - 1, p) == NULL) {
+            break;  // End of file or error
+        }
     }
 
     fclose(p);
@@ -176,22 +183,26 @@ int source(char *script) {
 }
 
 int echo(char *text) {
+    // Handle variable expansion: if text starts with '$', look up variable in shell memory
     if (text[0] == '$') {
-        char *varName = text + 1;
+        char *varName = text + 1;  // Skip the '$' to get variable name
         char *value = mem_get_value(varName);
-        if (value != NULL && strcmp(value, "Variable does not exist") != 0) {   // to avoid changing memory get
+        if (value != NULL && strcmp(value, "Variable does not exist") != 0) {
             printf("%s\n", value);
             return 0;
         }
         else {
+            // Variable not found: print empty line
             printf("\n");
             return 0;
         }
     }
+    // Regular string: print as-is
     printf("%s\n", text);
     return 0;
 }
 
+// Comparator function for qsort: compares two string pointers alphabetically
 int compare(const void *a, const void *b) {
     return strcmp(*(char **)a, *(char **)b);
 }
@@ -204,6 +215,7 @@ int my_ls() {
         return badcommand();
     }
 
+    // Read all directory entries into buffer for sorting
     char* buffer[100];
     int count = 0;
     while ((entry = readdir(dir)) != NULL) {
@@ -212,6 +224,7 @@ int my_ls() {
     }
 
     closedir(dir);
+    // Sort entries alphabetically before printing
     qsort(buffer, count, sizeof(char *), compare);
     for (int i = 0; i < count; i++) {
         printf("%s\n", buffer[i]);
@@ -220,6 +233,7 @@ int my_ls() {
     return 0;
 }
 
+// Validates that a string contains only alphanumeric characters (a-z, A-Z, 0-9)
 int is_alphanumeric(char* str) {
     if (str == NULL || strlen(str) == 0) {
         return 0; 
@@ -296,6 +310,7 @@ int my_cd(char *dir) {
 }
 
 int run(char *args[], int args_size) {
+    // Flush stdout before forking to ensure parent output appears before child output
     fflush(stdout);
     pid_t pid = fork();
     if (pid < 0) {
@@ -304,7 +319,7 @@ int run(char *args[], int args_size) {
     }
 
     if (pid == 0) {
-        // child: build argv for execvp from args[1..]
+        // Child process: build argv array for execvp (skip "run" command, use args[1..])
         int exec_argc = args_size - 1;
         char **exec_args = malloc((exec_argc + 1) * sizeof(char *));
         if (exec_args == NULL) {
@@ -313,13 +328,13 @@ int run(char *args[], int args_size) {
         for (int i = 0; i < exec_argc; i++) {
             exec_args[i] = args[i + 1];
         }
-        exec_args[exec_argc] = NULL;
+        exec_args[exec_argc] = NULL;  // execvp requires NULL-terminated array
 
         execvp(exec_args[0], exec_args);
-        // if execvp returns, error
+        // If execvp returns, it failed (shouldn't happen normally)
         return badcommand();   
     } else {
-        // parent wait for child 
+        // Parent process: wait for child to complete before continuing
         int status = 0;
         waitpid(pid, &status, 0);
         return 0;

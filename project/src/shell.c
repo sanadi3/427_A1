@@ -59,12 +59,11 @@ int parseInput(char inp[]) {
     // split input by ';'
     line = strtok(inp, ";");
     while (line != NULL) {
-        // reset w for each line
         w = 0;
         // STARTER CODE
         for (ix = 0; line[ix] == ' ' && ix < 1000; ix++); // skip white spaces
         while (line[ix] != '\n' && line[ix] != '\0' && ix < 1000) {
-            // extract a word
+            // Extract one word (characters until space, newline, or null terminator)
             for (wordlen = 0; !wordEnding(line[ix]) && ix < 1000; ix++, wordlen++) {
                 tmp[wordlen] = line[ix];                        
             }
@@ -77,7 +76,7 @@ int parseInput(char inp[]) {
         errorCode = interpreter(words, w);
         // STARTER CODE
         if (errorCode == -1) return errorCode; // exit on error
-        line = strtok(NULL, ";"); // next line
+        line = strtok(NULL, ";"); // Get next command in the chain
     }
     return 0;
 }
